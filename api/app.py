@@ -50,14 +50,28 @@ def getdata(name):
 
 @app.route('/api', methods=['GET'])
 def get_data_route():
-    username = request.args.get('user')
+    # 获取查询字符串中的所有参数
+    query_string = request.query_string.decode()
+    
+    # 提取用户名，假设用户名是查询字符串中唯一的参数
+    username = query_string.strip('&=?').replace('+', ' ')
+    
+    if not username:
+        return jsonify({"error": "username parameter is required"}), 400  # 如果没有提供 username 参数，返回错误信息
+
     data = getdata(username)
     response = jsonify(data)
     
-    # 允许任意域名访问
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    
-    # 可以根据需要设置其他允许的请求头和方法
+    # 允许特定域名访问
+    origin = request.headers.get('Origin')  # 获取请求头中的 Origin 字段
+
+    if origin in ['http://www.xiaoyu.ac.cn',  'http://ls.xiaoyu.ac.cn']:
+        response.headers['Access-Control-Allow-Origin'] = origin
+    else:
+        # 可以选择拒绝访问或者设置为其他值
+        response.headers['Access-Control-Allow-Origin'] = 'https://www.xiaoyu.ac.cn'  # 默认值
+
+    # 设置其他允许的请求头和方法
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
     response.headers.add('Access-Control-Allow-Methods', 'GET, POST')
     
